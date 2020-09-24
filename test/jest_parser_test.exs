@@ -2,7 +2,7 @@ defmodule JestParserTest do
   use ExUnit.Case
   doctest JestParser
 
-  describe "JestParser.encode&/1" do
+  describe "JestParser.encode/1" do
     test "correctly encodes well-formatted map" do
       jest_map = %{
         body: "Why don't eggs tell jokes?",
@@ -46,7 +46,31 @@ defmodule JestParserTest do
     end
   end
 
-  describe "JestParser.decode&/1" do
+
+  describe "JestParser.encode!/1" do
+    test "returns map when given well formatted map" do
+      jest_map = %{
+        body: "Why don't eggs tell jokes?",
+        punchline: "They'd crack each other up!",
+        author: "Jack Pott"
+      }
+      expected = "Why don't eggs tell jokes?|54686579276420637261636B2065616368206F7468657220757021|Jack Pott"
+      assert JestParser.encode!(jest_map) == expected
+    end
+
+    test "raises error on bad map" do
+      jest_map = %{
+        body: "What time did the man go to the dentist?",
+        punchline: 230,
+        author: "Bennie Factor"
+      }
+      assert_raise ArgumentError, "Given invalid map", fn ->
+        JestParser.encode!(jest_map)
+      end
+    end
+  end
+
+  describe "JestParser.decode/1" do
     test "correctly decodes well-formatted Jest message" do
       message = "I don't trust stairs|5468657927726520616C7761797320757020746F20736F6D657468696E6721|Joe King"
       expected = %{
@@ -111,6 +135,25 @@ defmodule JestParserTest do
     test "decoding message with too many pipes returns an error" do
       message = "I've |got a great joke| about construction,| but I'm still working on it."
       assert JestParser.decode(message) == {:error, "Message is not formatted correctly"}
+    end
+  end
+
+  describe "decode!/1" do
+    test "returns map when given well-formatted Jest message" do
+      message = "I don't trust stairs|5468657927726520616C7761797320757020746F20736F6D657468696E6721|Joe King"
+      expected = %{
+        body: "I don't trust stairs",
+        punchline: "They're always up to something!",
+        author: "Joe King"
+      }
+      assert JestParser.decode!(message) == expected
+    end
+
+    test "raises error when given invalid message" do
+      message = "I decided to sell my vacuum cleaner|It was just gathering dust|Jay Walker"
+      assert_raise ArgumentError, "Given invalid message", fn ->
+        JestParser.decode!(message)
+      end
     end
   end
 end
